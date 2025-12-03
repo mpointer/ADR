@@ -120,16 +120,16 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-white p-8 transition-colors duration-300">
       <header className="mb-8 flex justify-between items-center border-b border-gray-200 dark:border-neutral-800 pb-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-purple-600 dark:from-cyan-400 dark:to-purple-500 tracking-tight">
-            ADR Platform
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <p className="text-gray-500 dark:text-neutral-400 text-xs font-mono tracking-wide">SYSTEM ONLINE • v3.3.1</p>
+        <div className="flex items-center gap-4">
+          <img src="/logo.svg" alt="ADR Platform Logo" className="h-12" />
+          <div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <p className="text-gray-500 dark:text-neutral-400 text-xs font-mono tracking-wide">SYSTEM ONLINE • v3.3.1</p>
+            </div>
           </div>
         </div>
 
