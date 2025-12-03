@@ -133,7 +133,16 @@ export const generateException = (industry, forcePriority = null) => {
 // --- State Machine Logic ---
 
 export const advanceException = (exception, killSwitchActive = false) => {
-    const next = { ...exception, history: [...exception.history, { status: exception.status, timestamp: new Date().toISOString() }] };
+    // 1. Create a Deep Copy of the CURRENT state to store in history
+    // We store the state *before* the transition so we can roll back to it.
+    const snapshot = JSON.parse(JSON.stringify(exception));
+    // Remove history from the snapshot to avoid recursion/bloat
+    delete snapshot.history;
+
+    const next = {
+        ...exception,
+        history: [...exception.history, snapshot]
+    };
 
     // Helper to add a log entry with Pattern ID
     const addLog = (msg, type = 'info', agent = null, patternId = null) => {
@@ -196,6 +205,7 @@ export const advanceException = (exception, killSwitchActive = false) => {
             if (exception.industry === INDUSTRIES.FINANCE) agentName = "AP Specialist";
             if (exception.industry === INDUSTRIES.RETAIL) agentName = "Compliance Officer";
             next.agent = agentName;
+
             next.activePattern = 'P5';
 
             addLog(`[L2] Temporal Workflow: Executing "Standard ${exception.type} Playbook"`, 'system', "Orchestrator", 'P3');
@@ -232,4 +242,36 @@ export const advanceException = (exception, killSwitchActive = false) => {
             break;
     }
     return next;
+};
+
+export const rollbackException = (exception, stepIndex) => {
+    if (!exception.history || stepIndex < 0 || stepIndex >= exception.history.length) {
+        return exception;
+    }
+
+    // Retrieve the snapshot
+    const snapshot = exception.history[stepIndex];
+
+    // Create a new object from the snapshot
+    // We keep the history up to this point so we don't lose the fact that we rolled back?
+    // OR we can just restore the history array to be truncated.
+    // Let's truncate the history to simulate a true "rewind".
+    const restoredHistory = exception.history.slice(0, stepIndex);
+
+    const restoredException = {
+        ...snapshot,
+        history: restoredHistory
+    };
+
+    // Add a log entry indicating rollback
+    if (!restoredException.logs) restoredException.logs = [];
+    restoredException.logs.push({
+        timestamp: new Date().toISOString(),
+        message: `⏪ ROLLED BACK to state: ${snapshot.status}`,
+        type: 'warning',
+        agent: 'System Admin',
+        pattern: PATTERNS.P10
+    });
+
+    return restoredException;
 };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, FileJson, Activity, Database, ShieldCheck } from 'lucide-react';
+import { X, FileJson, Activity, Database, ShieldCheck, History, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const ExceptionDetailModal = ({ exception, onClose }) => {
+export const ExceptionDetailModal = ({ exception, onClose, onRollback }) => {
     const [activeTab, setActiveTab] = useState('business');
 
     if (!exception) return null;
@@ -37,22 +37,28 @@ export const ExceptionDetailModal = ({ exception, onClose }) => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-gray-200 dark:border-neutral-800">
+                <div className="flex border-b border-gray-200 dark:border-neutral-800 overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('business')}
-                        className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'business' ? 'border-b-2 border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                        className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'business' ? 'border-b-2 border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
                     >
                         <Database size={14} /> Business Data
                     </button>
                     <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'history' ? 'border-b-2 border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                    >
+                        <History size={14} /> History & Rollback
+                    </button>
+                    <button
                         onClick={() => setActiveTab('manifest')}
-                        className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'manifest' ? 'border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                        className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'manifest' ? 'border-b-2 border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
                     >
                         <ShieldCheck size={14} /> Sealed Manifest
                     </button>
                     <button
                         onClick={() => setActiveTab('json')}
-                        className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'json' ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                        className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'json' ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
                     >
                         <FileJson size={14} /> Raw JSON
                     </button>
@@ -72,6 +78,41 @@ export const ExceptionDetailModal = ({ exception, onClose }) => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'history' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Transaction History</h3>
+                                <span className="text-xs text-gray-500">{exception.history.length} snapshots available</span>
+                            </div>
+
+                            <div className="relative border-l-2 border-gray-200 dark:border-neutral-800 ml-3 space-y-6">
+                                {exception.history.map((snapshot, index) => (
+                                    <div key={index} className="relative pl-6">
+                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900"></div>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="text-xs font-bold text-gray-900 dark:text-white uppercase">{snapshot.status}</div>
+                                                <div className="text-[10px] text-gray-500 font-mono">{new Date(snapshot.timestamp).toLocaleTimeString()}</div>
+                                                <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                    Layer: {snapshot.layer}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => onRollback(exception.id, index)}
+                                                className="flex items-center gap-1 px-2 py-1 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[10px] font-bold rounded border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
+                                            >
+                                                <RotateCcw size={10} /> Rollback
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {exception.history.length === 0 && (
+                                    <div className="pl-6 text-xs text-gray-500 italic">No history available (Initial State)</div>
+                                )}
+                            </div>
                         </div>
                     )}
 

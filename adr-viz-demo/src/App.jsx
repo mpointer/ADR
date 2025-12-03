@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { ArchitectureDiagram } from './components/ArchitectureDiagram';
 import { SealedManifest } from './components/SealedManifest';
 import { ManualReviewQueue } from './components/ManualReviewQueue';
-import { generateException, advanceException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
-import { Play, Pause, Plus, Sun, Moon, ShieldAlert } from 'lucide-react';
+import { ExceptionDetailModal } from './components/ExceptionDetailModal';
+import TimelineView from './components/TimelineView';
+import { generateException, advanceException, rollbackException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
+import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar } from 'lucide-react';
 
 function App() {
   const [exceptions, setExceptions] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [killSwitch, setKillSwitch] = useState(false);
+  const [selectedException, setSelectedException] = useState(null);
+  const [viewMode, setViewMode] = useState('spatial'); // 'spatial' | 'temporal'
 
   // Toggle Theme
   useEffect(() => {
@@ -95,6 +99,24 @@ function App() {
     }));
   };
 
+  const handleRollback = (id, stepIndex) => {
+    setExceptions(prev => prev.map(e => {
+      if (e.id === id) {
+        const rolledBack = rollbackException(e, stepIndex);
+        // Also update selectedException if it's the one being rolled back
+        if (selectedException && selectedException.id === id) {
+          setSelectedException(rolledBack);
+        }
+        return rolledBack;
+      }
+      return e;
+    }));
+  };
+
+  const handleNodeClick = (exception) => {
+    setSelectedException(exception);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-white p-8 transition-colors duration-300">
       <header className="mb-8 flex justify-between items-center border-b border-gray-200 dark:border-neutral-800 pb-4">
@@ -112,6 +134,26 @@ function App() {
         </div>
 
         <div className="flex gap-4 items-center">
+          {/* View Switcher */}
+          <div className="flex bg-gray-200 dark:bg-neutral-800 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('spatial')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'spatial' ? 'bg-white dark:bg-neutral-700 shadow-sm text-cyan-600 dark:text-cyan-400' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+              title="Spatial View"
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('temporal')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'temporal' ? 'bg-white dark:bg-neutral-700 shadow-sm text-cyan-600 dark:text-cyan-400' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+              title="Temporal View"
+            >
+              <Calendar size={18} />
+            </button>
+          </div>
+
+          <div className="h-8 w-px bg-gray-300 dark:bg-neutral-800 mx-2"></div>
+
           <button
             onClick={() => setKillSwitch(!killSwitch)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${killSwitch ? 'bg-red-500 text-white border-red-600 animate-pulse' : 'bg-gray-200 dark:bg-neutral-800 border-transparent hover:bg-gray-300 dark:hover:bg-neutral-700'}`}
@@ -147,15 +189,27 @@ function App() {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <ArchitectureDiagram exceptions={exceptions} />
+      <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-8rem)]">
+        <div className="lg:col-span-2 h-full flex flex-col">
+          {viewMode === 'spatial' ? (
+            <ArchitectureDiagram exceptions={exceptions} onNodeClick={handleNodeClick} />
+          ) : (
+            <TimelineView exceptions={exceptions} onExceptionClick={handleNodeClick} />
+          )}
         </div>
-        <div className="lg:col-span-1 flex flex-col gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-6 h-full overflow-y-auto">
           <SealedManifest exceptions={exceptions} />
           <ManualReviewQueue exceptions={exceptions} onApprove={handleApprove} onReject={handleReject} />
         </div>
       </main>
+
+      {selectedException && (
+        <ExceptionDetailModal
+          exception={selectedException}
+          onClose={() => setSelectedException(null)}
+          onRollback={handleRollback}
+        />
+      )}
     </div>
   );
 }
