@@ -1,0 +1,418 @@
+--- START ADR Ref Architecture - High Level.docx ---
+
+High-Level Functional Architecture: Enterprise Agentic Resolution (v3.3)
+Strategic Overview of the Agentic Operating System
+1. Executive Summary
+This architecture defines a production-safe Agentic Operating System designed to automate complex back-office exceptions across industries such as Finance, Healthcare, Insurance, and Supply Chain1.
+Unlike traditional "black box" AI, this system uses a Pattern-Based approach governed by strict safety protocols. It decouples the "Cognitive" (Reasoning) functions from the "Control" (Execution) functions, ensuring that AI agents can perceive and propose solutions, but only deterministic policies can approve and execute them 2.
+Key Value Proposition:
+Safety: The system strengthens security and reliability, making it compliant for regulated enterprise environments3.
+Auditability: Every decision is cryptographically logged in a "Sealed Manifest"4.
+Extensibility: Domain intelligence is injected via modular "Domain Packs" without modifying the core platform55.
+
+2. Core Functional Principles
+The architecture is built on non-negotiable functional principles designed to satisfy Risk and Compliance standards:
+Segregation of Duties (The Air Gap): The system is split into two planes. The Cognitive Plane proposes actions. The Control Plane approves and executes them6.
+Audit by Design: If a decision isn't logged, it didn't happen. All decisions produce immutable Sealed Manifests7.
+Pattern Chaining: Instead of vague "agents," the system executes Playbooks—deterministic sequences of atomic capabilities8.
+Continuous Learning: When a human overrides the system, that interaction is captured as a feedback signal to improve the model9.
+Deterministic Reproducibility: The system guarantees that the same inputs, combined with the same versioned policies, will yield the exact same decision every time10.
+Data Minimization: Sensitive data (PHI/PII) is redacted by a dedicated layer before it reaches the reasoning layer11.
+
+3. The Universal Exception Lifecycle
+The system standardizes how any exception—regardless of industry—is resolved through a six-stage lifecycle 12:
+DETECT: Ingesting signals from ERPs, emails, or logs.
+PERCEIVE: Reading documents and extracting fields.
+REASON: Using semantic matching and probabilistic logic.
+DECIDE: Applying deterministic policies to approve or reject.
+ACT: Executing the write to the system of record.
+ASSURE: Logging the decision for audit.
+
+4. The Extensibility Model: Standard Core vs. Domain Edge
+A key architectural advantage is the separation of the "Universal Core" (Fixed) from the "Domain Intelligence" (Variable)13.
+A. The Standard Core (Reusable Infrastructure)
+These components are Industry-Agnostic and deployed once as the "Agentic OS." They do not change whether you are processing an invoice or a medical claim.
+The Lifecycle Engine: Manages state transitions (Detect → Act)14.
+The Standard 10 Patterns: The immutable library of capabilities used to assemble resolutions15:
+Data Patterns: Enrich (P1), Sync (P2), Format (P3).
+Reasoning Patterns: Match (P4), Dedupe (P5), Classify (P7).
+Action &amp; Decision Patterns: Policy Check (P6), Approval (P8), Write-Off (P9), Ask (P10).
+The Control Plane: The universal security gatekeeper that enforces Policy-as-Code16.
+The Audit Ledger: The immutable recording system17.
+B. The Domain Packs (Interchangeable Intelligence)
+These are modular "Skill Cartridges" injected into the Cognitive Plane via the Model Context Protocol (MCP)18181818. They contain the specific logic for a business domain.
+AP Domain Pack: Contains logic for "Three-Way Matching," "Tax Code Validation," and "Vendor Terms."
+Claims Domain Pack: Contains logic for "Clinical Necessity," "CPT Codes," and "Member Eligibility."
+Supply Chain Pack: Contains logic for "Bill of Lading," "Inventory Reconciliation," and "Customs Codes."
+Business Value: This allows the enterprise to scale from one department (Finance) to another (Operations) by simply deploying a new Domain Pack, without rebuilding the core infrastructure.
+
+5. Functional Layer View
+Input &amp; Protection Layers
+Sources (L0): The system connects to existing enterprise friction points, including ERPs, Claims Systems, General Ledgers, and Communication channels19.
+Ingestion (L1): Converts heterogeneous noise into a standardized "Canonical ExceptionEvent"20.
+Data Minimization (L1.5): A dedicated privacy layer that enforces redaction rules (e.g., masking PHI/PII) before the data enters the AI processing environment 21.
+The Core Processing Layers
+Orchestration (L2): The "Traffic Controller." It manages the lifecycle of the exception and executes Playbooks—pre-defined workflows that dictate which steps the AI should take22. It handles SLA enforcement, ensuring timeouts route to human workflows 23.
+The Cognitive Plane (L3.a): The "Brain." It is responsible for Perception (Analyst) and Reasoning (Strategist).
+Function: It extracts facts, interprets context, and proposes actions 24.
+Constraint: It is Read-Only and cannot execute changes25.
+Domain Packs: Industry-specific knowledge is injected via isolated microservices26.
+The Control Plane (L3.b): The "Gatekeeper." It is responsible for Assurance and Execution.
+Function: It runs deterministic Guardrails (Policies) to validate the AI's proposal27.
+Authority: It is the only layer authorized to execute writes to the Enterprise systems28.
+Safety: Includes High-Risk Escalation policies to block auto-execution on sensitive items like large write-offs or denial overturns 29.
+Capability &amp; Governance Layers
+Pattern Library (L4): A reusable library of capabilities including Enrichment, Matching, Policy Checks, and Approvals 30.
+Governance &amp; Audit (L5): The system of record for the AI itself. It maintains the Sealed Manifests (audit logs) and manages the Feedback Loop to improve performance over time 31.
+Connectivity (L6): The secure interface for executing approved actions back into the ERP, GL, or Claims systems 32.
+
+6. Governance &amp; Compliance Model
+The Sealed Manifest
+To satisfy auditors, the system generates a "Sealed Manifest" for every single transaction. This is not just a log file; it is a cryptographic evidence package containing 33:
+Input Snapshot: What data did the AI see?
+Policy Version: What specific rules were active at that second?
+AI Proposal: What did the Cognitive Plane suggest?
+Decision: Did the Control Plane approve or reject it?
+Justification: The human-readable explanation for the decision.
+Tenant Isolation
+The architecture supports two modes of isolation for multi-tenant or multi-division deployments 34:
+Hard Isolation: Strict physical separation of data, policies, and models.
+Federated Mode: Shared model weights but strictly isolated memory and manifests.
+Reliability Controls
+Drift Governance: The system monitors for "Drift"—if the AI's confidence levels drop unexpectedly, it alerts operations35.
+SLA Enforcement: If a Playbook exceeds its time limit, the system automatically degrades to a human workflow to ensure business continuity 36.
+
+--- END ADR Ref Architecture - High Level.docx ---
+
+--- START ADR Solutionizer - Prompt V3.docx ---
+
+ADR SOLUTIONIZER 
+Load this document along with the Solutionizer Master document and type in “run”.
+
+SECTION 1 — OPERATING PRINCIPLES (FROM MASTER)
+This Solutionizer must adhere to the ADR architectural constraints and principles as outlined later in this document, here are the key items:
+Core System Rules
+Air Gap: Cognitive Plane proposes; Control Plane executes.
+Sealed Manifests: Every decision is cryptographically logged.
+Data Minimization (L1.5): No PHI/PII enters L3.a (reasoning).
+Pattern-Based OS: All execution follows The Standard 10 Patterns.
+Cognitive Assistance Only: GenAI extracts and summarizes but does not decide or act.
+Dynamic Agent Formation:
+Standard Agents lead for structurally missing/invalid data
+Domain Agents lead when interpretation or contextual intelligence is needed
+Mixed formation auto-selects per exception type
+Governed Control Plane: All writes must be performed exclusively through the Approved Control Plane governed by OPA policies and XState (or an equivalent deterministic state engine). Only approved schema/graph-based state models may be used for actionable decisions. No probabilistic or model-driven decisions are permitted in the Control Plane.
+Universal Exception Lifecycle:
+DETECT → PERCEIVE → REASON → DECIDE → ACT → ASSURE
+Integration Boundaries
+ADR must plug into the user’s existing STP system, not replace it.
+Exception entry point = the STP engine that “drops” the case.
+Solution output must map back to the system of record.
+
+SECTION 2 — INTERACTIVE PROMPT (USER-SEQUENCED FLOW)
+This is the section the LLM executes exactly as-is.
+
+STEP 1 — ASK FOR INDUSTRY
+“Reply with the number of your choice:
+Insurance
+Manufacturing &amp; Automotive
+Healthcare
+Banking &amp; Finance
+Retail &amp; CPG
+Custom Scenario”
+Wait for reply.
+
+STEP 2 — ASK FOR PROBLEM (Filtered by Industry)
+If 1 — Insurance
+A. Missed Subrogation
+B. Claims Intake Blind Spots
+C. Custom Insurance Problem
+If 2 — Manufacturing &amp; Automotive
+A. Warranty Claim Disputes
+B. Goods Received Not Invoiced (GRNI)
+C. Custom Manufacturing Problem
+If 3 — Healthcare
+A. Prior Authorization Denials
+B. Provider Credentialing Delays
+C. Custom Healthcare Problem
+If 4 — Banking &amp; Finance
+A. Month-End Close Delays
+B. Invoice Reconciliation Gaps
+C. Custom Finance Problem
+If 5 — Retail &amp; CPG
+A. Landed Cost &amp; Tariff Leaks
+B. Vendor Compliance Deductions
+C. Custom Retail Problem
+If 6 — Custom or any “C” option
+“Describe your workflow or exception scenario.”
+Wait for reply.
+
+STEP 3 — ASK FOR TECH + STP SYSTEM (Critical Only)
+3A — Cloud / AI Stack
+“To align this solution with your environment, list the AI/cloud vendors you are using or considering.”
+
+3B — Intelligent STP System Menu (Industry + Problem Filtered)
+Present ONLY the appropriate short list:
+
+If Healthcare → Prior Authorization Denials
+“Which core system processes Prior Authorizations in your environment?
+Select one or more:
+Epic (Authorization/Utilization Review)
+Cerner / Oracle Health
+Availity
+Change Healthcare / Trizetto
+InterQual / MCG
+ServiceNow (Auth Workflows)
+SAP (Eligibility / Financial Clearance)
+Other”
+
+If Insurance → Subrogation / Intake
+Guidewire ClaimsCenter
+Duck Creek Claims
+Trizetto QNXT
+Origami Risk
+Mitchell/Enlyte
+Majesco
+Other
+
+If Manufacturing → GRNI / Warranty
+SAP ECC / S/4HANA
+Oracle EBS / Oracle Cloud ERP
+QAD
+Infor LN / M3
+IBM Maximo
+Other
+
+If Banking / Finance → Close / Reconciliations
+SAP S/4 Finance
+Oracle Financials
+Workday Financials
+BlackLine
+FIS / Fiserv
+Other
+
+If Retail / CPG → Tariffs / Compliance
+SAP S/4 + GTS
+Oracle Retail
+Manhattan WMS
+Blue Yonder
+SPS Commerce
+Other
+
+If Custom Scenario
+“Which system performs the straight-through processing before the exception occurs?”
+
+After user responds, proceed to deliverables.
+
+SECTION 3 — DELIVERABLES (AUTO-GENERATED OUTPUT)
+When STEP 3 is complete, the LLM must generate:
+
+1. THE SITUATION ROOM (Business Impact)
+Describe the BEFORE state
+List 3 high-friction pain points
+Include one quantifiable ROI metric
+Emphasize dynamic agent formation
+Reinforce GenAI = perception only
+
+2. THE RESOLUTION ROOM (Functional Architecture)
+Map to the Universal Exception Lifecycle:
+DETECT → PERCEIVE → REASON → DECIDE → ACT → ASSURE
+Must explicitly include:
+Data Minimization Layer (L1.5)
+Cognitive Plane (Standard + Domain)
+Air-Gapped Control Plane
+STP System (user-selected)
+GenAI assistance boundaries
+
+3. THE TYPE ROOM (Configuration Draft)
+Relevant Standard Patterns (e.g. Match, Classify, Ask, Approve)
+Draft Playbook JSON
+OPA/Rego guardrail snippet
+
+4. THE DEMO ROOM (Visual Script)
+5-step demo must include:
+Screen view
+Presenter narration
+Component acting (Standard, Domain, GenAI, Control Plane)
+Highlight where agent formation changes
+
+5. TECHNICAL APPENDIX
+Table must map:
+ADR Spec layers (L1–L6)
+Standard Agent / Domain Agent / GenAI Assistant / Control Plane
+Functions performed
+Fit to BOTH:
+user’s cloud/AI providers
+user’s selected STP system
+
+Glossary
+Provide 1-line definitions for all acronyms used.
+
+SECTION 4 — EXECUTION RULES
+To ensure outputs comply with ADR Reference Architecture (v3.3) :
+No LLM or GenAI can make decisions or produce actions.
+All writes must pass deterministic Control Plane guardrails.
+All exceptions must originate from the named STP system.
+All outputs must produce Sealed Manifests.
+Pattern execution must follow Standard 10 interface.
+
+SECTION 5 — END OF DOCUMENT
+This is the complete combined Solutionizer (Prompt + Master).
+Upload this into any LLM as a single document and run it.
+The workflow will now:
+ask only essential questions
+auto-present STP choices
+map solutions to enterprise systems
+preserve ADR governance and architecture
+produce consistent, enterprise-grade solution outputs
+
+--- END ADR Solutionizer - Prompt V3.docx ---
+
+--- START ADR Ref Architecture - Low Level.docx ---
+
+Low-Level Technical Specification: Enterprise Agentic Resolution (v3.3)
+Implementation Logic, Tech-Fittings &amp; Common Pitfalls
+
+1. Data Schemas &amp; API Contracts
+1.1 Canonical Exception Event Schema (L1 Output)
+The Normalizer must publish this JSON structure to the Event Bus to trigger the lifecycle:
+exceptionId (UUID): Unique trace ID for the entire lifecycle.
+sourceSystem (String): Origin identifier (e.g., "SAP_ERP_NA").
+type (String): Business classification (e.g., "PRICE_VARIANCE").
+payloadLocation (URI): Secure pointer to raw data (e.g., s3://secure-bucket/payload.json).
+priority (Enum): HIGH | MEDIUM | LOW.
+tenantId (UUID): Isolation key for multi-tenant handling.
+schemaVersion (String): Version of this event definition.
+timestamp (ISO8601): Creation time in UTC.
+1.2 Standard Pattern Interface (L4 Contract)
+All 10 Pattern Services must implement this REST/gRPC interface to ensure modularity 1111:
+Request: ExceptionContext (Full state) + patternConfig (Runtime params).
+Response:
+probabilityScore (Float 0.0-1.0).
+actions (Array of proposed mutations).
+justification (String for audit).
+updatedContext (State mutations).
+status (Enum: SUCCESS | FAIL | TIMEOUT).
+1.3 Sealed Manifest Schema (L5 Artifact)
+The immutable ledger record must contain these exact fields for cryptographic verification 2222:
+Identity: exceptionId, timestamp, sha256_hash.
+Versioning BOM: playbookVersion, patternVersions, modelVersions, domainPackVersions, policyCommitHash.
+Snapshots: inputSnapshot, proposalSnapshot, decision, executedAction, humanOverride.
+Risk: riskClass.
+
+2. Component Specifications
+2.1 L1 — Ingestion &amp; Normalization
+What: Ingests raw signals (APIs, Webhooks, Streams) and converts them to the Canonical Schema.
+How: Uses stateless adapters to map proprietary formats (e.g., SAP IDoc) to the standard JSON schema.
+Tech-Fittings:
+Event Bus: Apache Kafka or AWS EventBridge (for high-throughput pub/sub).
+Adapters: Apache Camel or MuleSoft (for protocol translation).
+AVOID:
+Heavy Processing in L1: Do not put business logic or validation rules here. L1 should strictly be "dumb pipes" that normalize formats.
+Payload Bloat: Do not put the full 50MB PDF payload on the Event Bus. Pass the payloadLocation URI instead.
+2.2 L1.5 — Data Minimization Layer
+What: Enforces privacy by redacting PHI/PII/PCI before data enters the AI layer 3333.
+How: Intercepts the payload and applies OPA policies to mask specific fields based on data classification tags.
+Tech-Fittings:
+Policy Engine: Open Policy Agent (OPA) (running as a sidecar or gateway plugin).
+Proxy: Envoy Proxy (to intercept traffic and call OPA).
+AVOID:
+Client-Side Redaction: Do not trust the source system to redact data. It must be enforced at the gateway.
+Hardcoded Regex: Do not rely on brittle Regex for PII detection. Use established libraries (e.g., Microsoft Presidio) wrapped in OPA policies.
+2.3 L2 — Orchestration (Lifecycle Manager)
+What: Manages the ExceptionContext, executes Playbooks, and enforces SLAs 444444444.
+How:
+Uses "Durable Execution" to ensure workflows survive failures.
+Tracks playbookVersion for every execution to ensure reproducibility.
+SLA Logic: Starts a durable timer for every pattern; if timeout fires, triggers a CancellationScope and routes to Warm Path.
+Tech-Fittings:
+Workflow Engine: Temporal.io (Best-in-class for durable, code-based workflows).
+State Store: Redis (for low-latency context access).
+AVOID:
+"Fire and Forget": Never use standard message queues for orchestration steps. If a worker dies mid-step, the logic is lost. Use a Durable Workflow engine.
+Business Logic in L2: The Orchestrator should only handle flow (e.g., "Run Pattern A, then B"). It should not contain logic (e.g., "If amount &gt; 500..."). Logic belongs in the Patterns or Policies.
+2.4 L3.a — Cognitive Plane (Reasoning)
+What: Performs probabilistic reasoning using LLMs and Domain Packs 5555.
+How:
+Analyst: Uses multimodal models for OCR/Extraction.
+Strategist: Uses RAG (Retrieval Augmented Generation) for policy lookup.
+Model Gateway: Routes requests to specific model versions and handles "Shadow Mode" traffic.
+Tech-Fittings:
+Framework: LangGraph or LangChain (for structuring reasoning loops).
+Model Gateway: MLflow or Portkey (for versioning and routing).
+MCP Host: Anthropic Model Context Protocol SDK (Node/Python).
+AVOID:
+Write Access: Never give the L3.a IAM role write permissions to any database or API. It must be ai.readonly6666.
+"God Models": Do not try to build one giant prompt to solve everything. Use Domain Packs via MCP to modularize skills.
+2.5 L3.b — Control Plane (Enforcement)
+What: Deterministic gatekeeper that validates proposals and executes writes 7777.
+How:
+Guardrails: Evaluates the ProposedAction against Rego policies (e.g., allow if confidence &gt; 0.9).
+Conflict Resolution: If multiple patterns propose conflicting actions, strict priority rules defined in the Playbook are applied 8888.
+High-Risk Escalation: Checks action types against a "Restricted List"; if matched, forces human_approval_required = true 9999.
+Tech-Fittings:
+Policy Engine: OPA (Open Policy Agent).
+Statechart Validator: XState (for validating lifecycle transitions).
+AVOID:
+Probabilistic Policies: Never use an LLM to "double check" the first LLM. The Guardrail must be deterministic code (Rego/Python).
+Bypassing the Gate: Never allow "Emergency" manual scripts to write to L6 without passing through the L3.b Ledger and Policy check.
+2.6 L5 — Governance &amp; Persistence
+What: Stores the immutable history and manages the learning loop 10101010.
+How:
+Sealed Manifest: Hashes the decision payload and appends to a tamper-proof ledger 11111111.
+Feedback Loop: Tagged overrides ("Correction" vs "Negative Sample") trigger asynchronous jobs to update the Vector Store 12121212.
+Tech-Fittings:
+Immutable Ledger: Amazon QLDB or Immudb (Cryptographically verifiable log).
+Vector Database: Pinecone, Weaviate, or pgvector (for Semantic Memory).
+Observability: Arize AI or WhyLabs (for ML drift detection).
+AVOID:
+Mutable Logs: Do not store the Manifest in a standard SQL database where a DBA could UPDATE a record. Use an append-only Ledger.
+Silent Failures: Do not drop feedback signals if the Vector Store is busy. Use a Dead Letter Queue (DLQ) to ensure no learning opportunity is lost.
+2.7 L6 — Connectivity (Act)
+What: Executes the approved writes to the ERP/GL 13131313.
+How:
+Connector Sandbox: A mocked instance of the ERP API is maintained for testing new Playbooks without risking production data 14141414.
+Idempotency: Every write request includes the exceptionId as an idempotency key.
+Tech-Fittings:
+Integration: MuleSoft, Workato, or Custom Microservices (Go/Python).
+AVOID:
+Direct DB Connections: Never connect directly to the ERP database (e.g., SQL JDBC). Always use the official API layer to ensure business logic/validation in the source system is respected.
+Shared Credentials: Never use a single "Service Account" for all domains. Use scoped credentials per Domain Pack/Tenant.
+
+3. Data Architecture Strategy
+Zone 1: Operational State (Hot)
+Content: Active ExceptionContext 15151515.
+Tech: Redis or DynamoDB.
+AVOID: Storing PII in clear text here. Use Token IDs mapped to a secure vault.
+Zone 2: Semantic Memory (Warm)
+Content: Embeddings, Policy Vectors, Domain Knowledge 16161616.
+Tech: Vector Database (e.g., Milvus, Pinecone).
+AVOID: Embedding raw PII (Names, SSNs) into vectors. You cannot "redact" a vector once created.
+Zone 3: Historic Case Memory (Cold)
+Content: Sealed Manifests, Final Outcomes, Human Overrides 17171717.
+Tech: Snowflake or S3 Data Lake (Parquet format).
+AVOID: Mixing "Draft" proposals with "Final" decisions. Only committed Manifests should land here for training.
+
+4. Security &amp; Identity Implementation
+4.1 Zero Trust Identity
+Mechanism: Usage of SPIFFE/SPIRE to issue short-lived mTLS certificates to every service.
+IAM Roles:
+ai.readonly: Assigned to L3.a; explicitly denies POST/PUT/DELETE on L6 APIs18181818.
+ai.operator: Assigned to L3.b; allows scoped writes19191919.
+4.2 Tenant Isolation (Hard vs. Federated)
+Hard Isolation: Separate Kubernetes Namespaces and Database Schemas per tenant20202020.
+AVOID: Using simple "TenantID" columns in a shared table for highly regulated data (FedRAMP/HIPAA). Use physical separation.
+
+5. Operational Engineering: EvalOps &amp; Reliability
+5.1 EvalOps Pipeline
+Golden Datasets: A curated set of historical inputs/outputs stored in the Cold Layer21212121.
+Regression Gate: CI/CD pipeline runs the Golden Dataset against the new Model/Playbook version.
+AVOID: Promoting models based solely on "Accuracy" metrics without checking "Refusal Rate" (Safety).
+5.2 Fail-Safe Modes
+Fail-Closed: If the OPA Policy Engine is unreachable, the Control Plane defaults to DENY22222222.
+Global Kill Switch: A dynamic configuration flag that instantly routes 100% of traffic to the Warm Path (Human)23232323.
+Shadow Mode: For testing new Domain Packs without execution24242424.
+AVOID: Hardcoding the Kill Switch in the application binary. It must be a remote config flag (e.g., LaunchDarkly) accessible to Ops in seconds.
+
+--- END ADR Ref Architecture - Low Level.docx ---
+
