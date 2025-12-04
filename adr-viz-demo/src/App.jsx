@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArchitectureDiagram } from './components/ArchitectureDiagram';
 import { SealedManifest } from './components/SealedManifest';
 import { ManualReviewQueue } from './components/ManualReviewQueue';
@@ -338,7 +338,7 @@ function App() {
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-8rem)]">
         <div className="lg:col-span-2 h-full flex flex-col min-h-0">
           {viewMode === 'spatial' && (
-            <ArchitectureDiagram exceptions={exceptions} onNodeClick={handleNodeClick} />
+            <ArchitectureDiagram ref={diagramRef} exceptions={exceptions} onNodeClick={handleNodeClick} />
           )}
           {viewMode === 'temporal' && (
             <TimelineView exceptions={exceptions} onExceptionClick={handleNodeClick} />
