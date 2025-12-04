@@ -9,7 +9,9 @@ import { ClusterMapView } from './components/ClusterMapView';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { generateException, generateSignal, advanceException, rollbackException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
 import { THEMES, applyTheme } from './lib/themes';
-import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar, PieChart, BarChart, Palette } from 'lucide-react';
+import { DemoGuide } from './components/DemoGuide';
+import { TourOverlay } from './components/TourOverlay';
+import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar, PieChart, BarChart, Palette, BookOpen } from 'lucide-react';
 
 function App() {
   const [exceptions, setExceptions] = useState([]);
@@ -20,6 +22,9 @@ function App() {
   const [viewMode, setViewMode] = useState('spatial'); // 'spatial' | 'temporal' | 'cluster' | 'dashboard'
   const [policyConfig, setPolicyConfig] = useState({ approvalThreshold: 10000 });
   const [currentTheme, setCurrentTheme] = useState(THEMES.DEFAULT);
+  const [showDemoGuide, setShowDemoGuide] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+  const diagramRef = useRef(null);
 
   // Apply theme side-effect
   useEffect(() => {
@@ -150,6 +155,63 @@ function App() {
 
   return (
     <div className={`min-h-screen ${getThemeClasses()} text-gray-900 dark:text-white p-4 lg:p-8 transition-colors duration-300 ${currentTheme.font} ${currentTheme.radius || 'rounded-lg'}`}>
+      <DemoGuide
+        isOpen={showDemoGuide}
+        onClose={() => setShowDemoGuide(false)}
+        onStartTour={() => {
+          setShowDemoGuide(false);
+          setShowTour(true);
+        }}
+      />
+
+      <TourOverlay
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => {
+          setShowTour(false);
+          // Optional: Show a "Tour Complete" toast or confetti
+        }}
+        steps={[
+          {
+            title: "Welcome to the ADR Platform",
+            description: "This interactive tour will guide you through the key features of our Autonomous Dispute Resolution system. Let's get started!",
+            selector: "header h1", // Target the title
+            action: () => {
+              setViewMode('spatial');
+              diagramRef.current?.resetZoom();
+            }
+          },
+          {
+            title: "L-1: Pre-Dispute Radar",
+            description: "This is where the magic happens. Our AI predicts potential disputes before they occur, allowing for proactive resolution.",
+            selector: "[data-layer='L-1: Pre-Dispute Radar']", // We need to ensure this selector exists or use a more robust one
+            action: () => {
+              setViewMode('spatial');
+              diagramRef.current?.zoomTo(1.2);
+            }
+          },
+          {
+            title: "Interactive Policy Tuner",
+            description: "You are in control. Adjust the Approval Threshold to dynamically tune the AI's risk tolerance and see the impact in real-time.",
+            selector: ".policy-control-panel", // Need to add this class to PolicyControlPanel
+            action: () => {
+              diagramRef.current?.zoomTo(1.0);
+            }
+          },
+          {
+            title: "God Mode Analytics",
+            description: "Switch to the Cluster View to visualize high-risk patterns and identify systemic issues across your entire transaction volume.",
+            selector: "button[title='Analytics View']",
+            action: () => setViewMode('cluster')
+          },
+          {
+            title: "Industry Skins",
+            description: "Customize the platform's look and feel to match your industry vertical with a single click.",
+            selector: "button[title='Select Skin']",
+            action: () => setViewMode('spatial')
+          }
+        ]}
+      />
       <header className="mb-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 border-b border-gray-200 dark:border-neutral-800 pb-6">
         <div className="flex items-center gap-6 lg:gap-8 w-full xl:w-auto">
           <img src="/logo.svg" alt="ADR Platform Logo" className="h-10 lg:h-12 w-auto object-contain shrink-0 mr-4" />
@@ -235,6 +297,14 @@ function App() {
                   ))}
                 </div>
               </div>
+
+              <button
+                onClick={() => setShowDemoGuide(true)}
+                className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
+                title="Open Demo Guide"
+              >
+                <BookOpen size={16} />
+              </button>
 
               <button
                 onClick={() => setKillSwitch(!killSwitch)}

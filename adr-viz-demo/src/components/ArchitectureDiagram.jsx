@@ -102,7 +102,7 @@ const ExceptionNode = ({ exception, onClick }) => {
     );
 };
 
-export const ArchitectureDiagram = ({ exceptions, onNodeClick }) => {
+export const ArchitectureDiagram = React.forwardRef(({ exceptions, onNodeClick }, ref) => {
     // Group exceptions by layer for visualization
     const getExceptionsForLayer = (layerKey) => exceptions.filter(e => e.layer === LAYERS[layerKey]);
 
@@ -112,6 +112,12 @@ export const ArchitectureDiagram = ({ exceptions, onNodeClick }) => {
     const handleZoomIn = () => setScale(prev => Math.min(prev + 0.1, 1.5));
     const handleZoomOut = () => setScale(prev => Math.max(prev - 0.1, 0.5));
     const handleReset = () => setScale(1);
+
+    // Expose zoom control to parent
+    React.useImperativeHandle(ref, () => ({
+        zoomTo: (level) => setScale(level),
+        resetZoom: () => setScale(1)
+    }));
 
     return (
         <div className="relative h-full flex flex-col overflow-hidden">
@@ -199,4 +205,4 @@ export const ArchitectureDiagram = ({ exceptions, onNodeClick }) => {
             </div>
         </div>
     );
-};
+});
