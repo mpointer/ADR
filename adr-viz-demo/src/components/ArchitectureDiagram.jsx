@@ -136,6 +136,13 @@ export const ArchitectureDiagram = ({ exceptions, onNodeClick }) => {
                     transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 >
 
+                    {/* L-1: Pre-Dispute Radar */}
+                    <Layer id="L_MINUS_1" title="L-1: Pre-Dispute Radar" tech="Predictive Engine" isActive={getExceptionsForLayer('L_MINUS_1').length > 0} color="border-amber-200 dark:border-amber-900/50">
+                        <AnimatePresence>
+                            {getExceptionsForLayer('L_MINUS_1').map(e => <ExceptionNode key={e.id} exception={e} onClick={onNodeClick} />)}
+                        </AnimatePresence>
+                    </Layer>
+
                     {/* L0: Sources */}
                     <Layer id="L0" title="L0: Sources" tech="Kafka / EventBridge" isActive={getExceptionsForLayer('L0').length > 0}>
                         <AnimatePresence>

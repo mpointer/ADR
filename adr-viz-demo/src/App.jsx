@@ -3,8 +3,9 @@ import { ArchitectureDiagram } from './components/ArchitectureDiagram';
 import { SealedManifest } from './components/SealedManifest';
 import { ManualReviewQueue } from './components/ManualReviewQueue';
 import { ExceptionDetailModal } from './components/ExceptionDetailModal';
+import { PolicyControlPanel } from './components/PolicyControlPanel';
 import TimelineView from './components/TimelineView';
-import { generateException, advanceException, rollbackException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
+import { generateException, generateSignal, advanceException, rollbackException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
 import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar } from 'lucide-react';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
   const [killSwitch, setKillSwitch] = useState(false);
   const [selectedException, setSelectedException] = useState(null);
   const [viewMode, setViewMode] = useState('spatial'); // 'spatial' | 'temporal'
+  const [policyConfig, setPolicyConfig] = useState({ approvalThreshold: 10000 });
 
   // Toggle Theme
   useEffect(() => {
@@ -34,7 +36,7 @@ function App() {
         let next = prev.map(e => {
           // 30% chance to advance in each tick
           if (Math.random() > 0.7 && e.status !== STATES.COMPLETED && e.status !== STATES.MANUAL_HOLD) {
-            return advanceException(e, killSwitch);
+            return advanceException(e, killSwitch, policyConfig);
           }
           return e;
         });
@@ -42,12 +44,19 @@ function App() {
         // 2. Remove completed ones after a while
         next = next.filter(e => !(e.status === STATES.COMPLETED && Math.random() > 0.9));
 
+        // 3. Randomly generate Pre-Dispute Signals (L-1)
+        if (Math.random() > 0.85) { // 15% chance per tick
+          const industries = Object.values(INDUSTRIES);
+          const randomIndustry = industries[Math.floor(Math.random() * industries.length)];
+          next.push(generateSignal(randomIndustry));
+        }
+
         return next;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, killSwitch]);
+  }, [isPlaying, killSwitch, policyConfig]);
 
   const addException = (industry, priority = null) => {
     setExceptions(prev => [...prev, generateException(industry, priority)]);
@@ -119,7 +128,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-white p-8 transition-colors duration-300">
-      <header className="mb-8 flex justify-between items-center border-b border-gray-200 dark:border-neutral-800 pb-4">
+      <header className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-gray-200 dark:border-neutral-800 pb-4">
         <div className="flex items-center gap-4">
           <img src="/logo.svg" alt="ADR Platform Logo" className="h-12" />
           <div>
@@ -133,7 +142,12 @@ function App() {
           </div>
         </div>
 
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center justify-end w-full lg:w-auto">
+          {/* Policy Tuner */}
+          <PolicyControlPanel config={policyConfig} onConfigChange={setPolicyConfig} />
+
+          <div className="h-12 w-px bg-gray-300 dark:bg-neutral-800 mx-2 hidden lg:block"></div>
+
           {/* View Switcher */}
           <div className="flex bg-gray-200 dark:bg-neutral-800 rounded-lg p-1">
             <button

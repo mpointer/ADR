@@ -17,6 +17,7 @@ export const EXCEPTION_TYPES = {
 };
 
 export const LAYERS = {
+    L_MINUS_1: 'L-1: Pre-Dispute Radar',
     L0: 'L0: Sources',
     L1: 'L1: Ingestion',
     L1_5: 'L1.5: Data Minimization',
@@ -27,6 +28,7 @@ export const LAYERS = {
 };
 
 export const STATES = {
+    PRE_DISPUTE: 'PRE_DISPUTE',
     DETECT: 'DETECT',
     PERCEIVE: 'PERCEIVE',
     REASON: 'REASON',
@@ -57,6 +59,45 @@ const SOURCES = {
     [INDUSTRIES.HEALTHCARE]: ['Epic EHR', 'Cerner', 'Allscripts', 'Workday HCM'],
     [INDUSTRIES.FINANCE]: ['SAP S/4HANA', 'Oracle NetSuite', 'Coupa', 'Workday Finance'],
     [INDUSTRIES.RETAIL]: ['Salesforce Commerce', 'Shopify Plus', 'Manhattan WMS', 'SAP ERP'],
+};
+
+export const generateSignal = (industry) => {
+    const types = ['Sentiment Drop', 'Inventory Mismatch', 'Payment Delay Risk', 'Policy Drift'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const id = uuidv4();
+
+    return {
+        id,
+        industry,
+        type: `[SIGNAL] ${type}`,
+        timestamp: new Date().toISOString(),
+        status: STATES.PRE_DISPUTE,
+        layer: LAYERS.L_MINUS_1,
+        priority: 'LOW',
+        tenantId: uuidv4().split('-')[0],
+        sourceSystem: 'Predictive Engine',
+        data: {
+            risk_score: Math.floor(Math.random() * 100),
+            confidence: 0.65,
+            prediction_window: '48h'
+        },
+        manifest: {
+            id: uuidv4(),
+            exception_id: id,
+            bom: {},
+            snapshots: [],
+            hashes: []
+        },
+        activePattern: null,
+        history: [],
+        logs: [{
+            timestamp: new Date().toISOString(),
+            message: `[L-1] Detected upstream signal: ${type}. Risk Score: ${Math.floor(Math.random() * 100)}`,
+            type: 'warning',
+            agent: 'Predictive Engine',
+            pattern: PATTERNS.P3
+        }]
+    };
 };
 
 export const generateException = (industry, forcePriority = null) => {
@@ -94,6 +135,18 @@ export const generateException = (industry, forcePriority = null) => {
         };
     }
 
+    const generateThoughtStream = (type, industry) => {
+        const steps = [
+            { stage: "PERCEIVE", action: "Scanning document...", detail: "Extracted 14 fields from PDF invoice.", duration: 150 },
+            { stage: "PERCEIVE", action: "Validating schema...", detail: "Field 'VendorID' matches format V-[0-9]{4}.", duration: 100 },
+            { stage: "REASON", action: "Contextual lookup...", detail: `Retrieving ${industry} policy pack v4.2.`, duration: 300 },
+            { stage: "REASON", action: "Pattern matching...", detail: `Detected '${type}' pattern with 94% confidence.`, duration: 400 },
+            { stage: "DECIDE", action: "Checking guardrails...", detail: "Amount < $10k threshold. Auto-approval candidate.", duration: 200 },
+            { stage: "ACT", action: "Drafting resolution...", detail: "Prepared ERP write-back payload.", duration: 150 }
+        ];
+        return steps;
+    };
+
     return {
         id,
         industry,
@@ -127,12 +180,13 @@ export const generateException = (industry, forcePriority = null) => {
         },
         activePattern: null,
         history: [],
+        thoughtStream: generateThoughtStream(type, industry), // Add thought stream
     };
 };
 
 // --- State Machine Logic ---
 
-export const advanceException = (exception, killSwitchActive = false) => {
+export const advanceException = (exception, killSwitchActive = false, policyConfig = { approvalThreshold: 10000 }) => {
     // 1. Create a Deep Copy of the CURRENT state to store in history
     // We store the state *before* the transition so we can roll back to it.
     const snapshot = JSON.parse(JSON.stringify(exception));
@@ -177,6 +231,24 @@ export const advanceException = (exception, killSwitchActive = false) => {
     }
 
     switch (exception.status) {
+        case STATES.PRE_DISPUTE:
+            // 30% chance to fade out (avoided), 70% chance to escalate
+            if (Math.random() > 0.7) {
+                // Fade out / Avoided
+                next.status = STATES.COMPLETED; // Or a new 'AVOIDED' state? Let's just complete it for now or remove it.
+                // Actually, if we mark it completed, it stays in the view but green.
+                // Let's mark it as 'AVOIDED' for visual distinction if we had that state, but COMPLETED is fine.
+                // Or better: effectively remove it by making it COMPLETED and maybe the UI filters it out or shows it as resolved.
+                next.data.decision = "AVOIDED_UPSTREAM";
+                addLog(`[L-1] Signal faded. Risk mitigated automatically.`, 'success', "Predictive Engine", 'P5');
+            } else {
+                // Escalate to L0
+                next.status = STATES.DETECT;
+                next.layer = LAYERS.L0;
+                next.agent = "Ingestion Bot";
+                addLog(`[L-1] Risk Threshold Breached. Escalating to Exception.`, 'warning', "Predictive Engine", 'P1');
+            }
+            break;
         case STATES.DETECT:
             next.status = STATES.PERCEIVE;
             next.layer = LAYERS.L1;
@@ -214,15 +286,30 @@ export const advanceException = (exception, killSwitchActive = false) => {
             addLog(`[L3.a] PROPOSAL: ${next.data.ai_proposal}`, 'ai', agentName, 'P5');
             break;
         case STATES.DECIDE:
-            next.data.decision = "APPROVED";
-            next.status = STATES.ACT;
-            next.layer = LAYERS.L6;
-            next.agent = "Policy Enforcer";
-            next.activePattern = 'P7';
-            addLog(`[L3.b] Control Plane received proposal.`, 'control', "Policy Enforcer", 'P6');
-            addLog(`[L3.b] OPA Guardrail: Amount < $10,000 (PASS)`, 'control', "Policy Enforcer", 'P6');
-            addLog(`[L3.b] DECISION: APPROVED. Signing Manifest.`, 'success', "Policy Enforcer", 'P7');
-            addLog(`[L3.b] Cryptographic Signature Generated.`, 'success', "Policy Enforcer", 'P8');
+            // Dynamic Policy Check
+            const threshold = policyConfig.approvalThreshold;
+            const amount = next.data.amount || 0;
+
+            if (amount < threshold) {
+                next.data.decision = "APPROVED";
+                next.status = STATES.ACT;
+                next.layer = LAYERS.L6;
+                next.agent = "Policy Enforcer";
+                next.activePattern = 'P7';
+                addLog(`[L3.b] Control Plane received proposal.`, 'control', "Policy Enforcer", 'P6');
+                addLog(`[L3.b] OPA Guardrail: Amount $${amount} < $${threshold} (PASS)`, 'control', "Policy Enforcer", 'P6');
+                addLog(`[L3.b] DECISION: APPROVED. Signing Manifest.`, 'success', "Policy Enforcer", 'P7');
+                addLog(`[L3.b] Cryptographic Signature Generated.`, 'success', "Policy Enforcer", 'P8');
+            } else {
+                next.data.decision = "MANUAL_REVIEW";
+                next.status = STATES.MANUAL_HOLD;
+                next.layer = LAYERS.L2;
+                next.agent = "System Override";
+                next.activePattern = 'P6';
+                addLog(`[L3.b] Control Plane received proposal.`, 'control', "Policy Enforcer", 'P6');
+                addLog(`[L3.b] OPA Guardrail: Amount $${amount} >= $${threshold} (FAIL)`, 'warning', "Policy Enforcer", 'P6');
+                addLog(`[L3.b] DECISION: ROUTED TO MANUAL REVIEW.`, 'warning', "Policy Enforcer", 'P7');
+            }
             break;
         case STATES.ACT:
             next.status = STATES.ASSURE;
