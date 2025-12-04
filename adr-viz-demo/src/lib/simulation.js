@@ -362,3 +362,55 @@ export const rollbackException = (exception, stepIndex) => {
 
     return restoredException;
 };
+
+export const calculateStats = (exceptions) => {
+    // Filter for closed cases (COMPLETED or ACT/ASSURE if we consider them 'done' for stats)
+    // Let's use COMPLETED and ACT/ASSURE as 'Resolved'
+    const resolved = exceptions.filter(e => e.status === STATES.COMPLETED || e.status === STATES.ACT || e.status === STATES.ASSURE);
+
+    let autoCount = 0;
+    let manualCount = 0;
+    let avoidedCount = 0;
+
+    resolved.forEach(e => {
+        if (e.data.decision === "APPROVED" || e.data.decision === "APPROVED (AUTO)") {
+            autoCount++;
+        } else if (e.data.decision === "MANUAL_REVIEW" || e.data.decision === "APPROVED (MANUAL)" || e.data.decision === "REJECTED (MANUAL)") {
+            manualCount++;
+        } else if (e.data.decision === "AVOIDED_UPSTREAM") {
+            avoidedCount++;
+        }
+    });
+
+    const totalResolved = autoCount + manualCount + avoidedCount;
+    const automationRate = totalResolved > 0 ? ((autoCount + avoidedCount) / totalResolved) * 100 : 0;
+
+    // Assumptions:
+    // Manual Review = $50 cost, 20 mins (1200 sec)
+    // Auto Review = $0.50 cost, 1 sec
+    // Avoided = $0 cost, 0 sec
+
+    const manualCost = manualCount * 50;
+    const autoCost = autoCount * 0.50;
+    const totalCost = manualCost + autoCost;
+
+    // Baseline (if all were manual)
+    const baselineCost = (autoCount + manualCount + avoidedCount) * 50;
+    const costSavings = baselineCost - totalCost;
+
+    const manualTime = manualCount * 20; // minutes
+    const autoTime = (autoCount * 1) / 60; // minutes
+    const totalTime = manualTime + autoTime;
+
+    const baselineTime = (autoCount + manualCount + avoidedCount) * 20;
+    const timeSavedHours = (baselineTime - totalTime) / 60;
+
+    return {
+        totalVolume: exceptions.length,
+        resolvedCount: totalResolved,
+        automationRate: Math.round(automationRate),
+        costSavings: Math.round(costSavings),
+        timeSavedHours: Math.round(timeSavedHours * 10) / 10, // 1 decimal
+        avoidedCount
+    };
+};

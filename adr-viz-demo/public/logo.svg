@@ -27,5 +27,7 @@
   </g>
   
   <!-- Text -->
-  <text x="130" y="60" font-family="monospace" font-weight="bold" font-size="40" fill="url(#grad1)" letter-spacing="2">ADR PLATFORM</text>
+  <!-- Text -->
+  <text x="130" y="45" font-family="monospace" font-weight="bold" font-size="40" fill="url(#grad1)" letter-spacing="2">ADR</text>
+  <text x="130" y="85" font-family="monospace" font-weight="bold" font-size="32" fill="url(#grad1)" letter-spacing="4">PLATFORM</text>
 </svg>
