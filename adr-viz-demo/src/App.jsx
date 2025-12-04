@@ -5,8 +5,9 @@ import { ManualReviewQueue } from './components/ManualReviewQueue';
 import { ExceptionDetailModal } from './components/ExceptionDetailModal';
 import { PolicyControlPanel } from './components/PolicyControlPanel';
 import TimelineView from './components/TimelineView';
+import { ClusterMapView } from './components/ClusterMapView';
 import { generateException, generateSignal, advanceException, rollbackException, INDUSTRIES, STATES, LAYERS, PATTERNS } from './lib/simulation';
-import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar } from 'lucide-react';
+import { Play, Pause, Plus, Sun, Moon, ShieldAlert, LayoutGrid, Calendar, PieChart } from 'lucide-react';
 
 function App() {
   const [exceptions, setExceptions] = useState([]);
@@ -14,7 +15,7 @@ function App() {
   const [isDark, setIsDark] = useState(true);
   const [killSwitch, setKillSwitch] = useState(false);
   const [selectedException, setSelectedException] = useState(null);
-  const [viewMode, setViewMode] = useState('spatial'); // 'spatial' | 'temporal'
+  const [viewMode, setViewMode] = useState('spatial'); // 'spatial' | 'temporal' | 'cluster'
   const [policyConfig, setPolicyConfig] = useState({ approvalThreshold: 10000 });
 
   // Toggle Theme
@@ -164,6 +165,13 @@ function App() {
             >
               <Calendar size={18} />
             </button>
+            <button
+              onClick={() => setViewMode('cluster')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'cluster' ? 'bg-white dark:bg-neutral-700 shadow-sm text-cyan-600 dark:text-cyan-400' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+              title="Analytics View"
+            >
+              <PieChart size={18} />
+            </button>
           </div>
 
           <div className="h-8 w-px bg-gray-300 dark:bg-neutral-800 mx-2"></div>
@@ -205,10 +213,14 @@ function App() {
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-8rem)]">
         <div className="lg:col-span-2 h-full flex flex-col">
-          {viewMode === 'spatial' ? (
+          {viewMode === 'spatial' && (
             <ArchitectureDiagram exceptions={exceptions} onNodeClick={handleNodeClick} />
-          ) : (
+          )}
+          {viewMode === 'temporal' && (
             <TimelineView exceptions={exceptions} onExceptionClick={handleNodeClick} />
+          )}
+          {viewMode === 'cluster' && (
+            <ClusterMapView exceptions={exceptions} onExceptionClick={handleNodeClick} />
           )}
         </div>
         <div className="lg:col-span-1 flex flex-col gap-6 h-full overflow-y-auto">
